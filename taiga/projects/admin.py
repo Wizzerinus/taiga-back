@@ -176,6 +176,7 @@ class ProjectAdmin(admin.ModelAdmin):
             project.is_private = False
 
             anon_permissions = list(map(lambda perm: perm[0], ANON_PERMISSIONS))
+            # Explicitly not adding "Default public permissions" here
             project.anon_permissions = list(set((project.anon_permissions or []) + anon_permissions))
             project.public_permissions = list(set((project.public_permissions or []) + anon_permissions))
 

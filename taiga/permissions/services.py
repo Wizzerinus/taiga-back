@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2021-present Kaleidos Ventures SL
 
-from .choices import ADMINS_PERMISSIONS, MEMBERS_PERMISSIONS, ANON_PERMISSIONS
+from .choices import ADMINS_PERMISSIONS, DEFAULT_PUBLIC_PERMISSIONS, MEMBERS_PERMISSIONS, ANON_PERMISSIONS
 
 from django.apps import apps
 
@@ -142,4 +142,7 @@ def set_base_permissions_for_project(project):
         # least visualization permissions.
         anon_permissions = list(map(lambda perm: perm[0], ANON_PERMISSIONS))
         project.anon_permissions = list(set((project.anon_permissions or []) + anon_permissions))
-        project.public_permissions = list(set((project.public_permissions or []) + anon_permissions))
+        default_public_permissions = list(
+            map(lambda perm: perm[0], DEFAULT_PUBLIC_PERMISSIONS))
+        project.public_permissions = list(set((project.public_permissions or []) +
+                                              anon_permissions + default_public_permissions))

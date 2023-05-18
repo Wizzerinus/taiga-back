@@ -18,6 +18,13 @@ ANON_PERMISSIONS = [
     ('view_wiki_links', _('View wiki links')),
 ]
 
+# In addition to ANON_PERMISSIONS
+DEFAULT_PUBLIC_PERMISSIONS = [
+    ('add_issue', _('Add issue')),
+    ('comment_issue', _('Comment issue')),
+    ('edit_issues_security', _('Edit issues (Security)')),
+]
+
 MEMBERS_PERMISSIONS = [
     ('view_project', _('View project')),
     # Milestone permissions
