@@ -4,11 +4,27 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # Copyright (c) 2021-present Kaleidos Ventures SL
+from django.apps import apps
+from django.conf import settings
+from django.db.models import Q
 
-from taiga.base.filters import PermissionBasedFilterBackend
+from taiga.base.filters import FilterBackend, PermissionBasedFilterBackend
 from taiga.base.utils.db import to_tsquery
 
 from . import services
+
+
+class HideUsersFilterBackend(FilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        user = request.user
+        if not settings.HIDDEN_USERS_ENABLED or user.is_superuser:
+            return queryset
+
+        user_model = apps.get_model("users", "User")
+        if not user.is_authenticated:
+            return user_model.objects.none()
+        project_ids = services.get_visible_project_ids(user, user)
+        return queryset.filter(Q(is_active=True, memberships__project_id__in=project_ids) | Q(pk=user.pk))
 
 
 class ContactsFilterBackend(PermissionBasedFilterBackend):

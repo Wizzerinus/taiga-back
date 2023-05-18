@@ -11,7 +11,6 @@ from django.apps import apps
 from django.utils.translation import gettext as _
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from django.conf import settings
 
 from taiga.auth.exceptions import TokenError
 from taiga.auth.tokens import CancelToken
@@ -38,6 +37,7 @@ from . import permissions
 from . import filters as user_filters
 from . import services
 from . import utils as user_utils
+from .filters import HideUsersFilterBackend
 from .signals import user_cancel_account as user_cancel_account_signal
 from .signals import user_change_email as user_change_email_signal
 from .throttling import UserDetailRateThrottle, UserUpdateRateThrottle
@@ -48,7 +48,7 @@ class UsersViewSet(ModelCrudViewSet):
     serializer_class = serializers.UserSerializer
     admin_validator_class = validators.UserAdminValidator
     validator_class = validators.UserValidator
-    filter_backends = (MembersFilterBackend,)
+    filter_backends = (HideUsersFilterBackend, MembersFilterBackend)
     throttle_classes = (UserDetailRateThrottle, UserUpdateRateThrottle)
     model = models.User
 
@@ -91,7 +91,7 @@ class UsersViewSet(ModelCrudViewSet):
         return response.Ok(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
-        self.object = get_object_or_404(self.get_queryset(), **kwargs)
+        self.object = get_object_or_404(self.filter_queryset(self.get_queryset()), **kwargs)
         self.check_permissions(request, 'retrieve', self.object)
         serializer = self.get_serializer(self.object)
         return response.Ok(serializer.data)

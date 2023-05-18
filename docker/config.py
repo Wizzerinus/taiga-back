@@ -121,6 +121,7 @@ CELERY_TASK_DEFAULT_ROUTING_KEY = 'task.default'
 ##  REGISTRATION
 #########################################
 PUBLIC_REGISTER_ENABLED = os.getenv('PUBLIC_REGISTER_ENABLED', 'false') == 'true'
+HIDDEN_USERS_ENABLED = os.getenv('HIDDEN_USERS_ENABLED', 'False') == 'True'
 
 
 #########################################

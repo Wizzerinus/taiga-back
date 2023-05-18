@@ -673,6 +673,9 @@ INSTALLED_APPS += [
         "taiga.telemetry"
 ]
 
+# Hidden users setting
+HIDDEN_USERS_ENABLED = False
+
 # NOTE: DON'T INSERT ANYTHING AFTER THIS BLOCK
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
 
