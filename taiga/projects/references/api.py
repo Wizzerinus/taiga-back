@@ -15,6 +15,7 @@ from taiga.permissions.services import user_has_perm
 
 from .validators import ResolverValidator
 from . import permissions
+from taiga.projects.issues.utils import get_allowed_scopes, get_issue_scope_query
 
 
 class ResolverViewSet(viewsets.ViewSet):
@@ -44,7 +45,8 @@ class ResolverViewSet(viewsets.ViewSet):
             result["task"] = get_object_or_error(project.tasks.all(), request.user,
                                                  ref=data["task"]).pk
         if data["issue"] and user_has_perm(request.user, "view_issues", project):
-            result["issue"] = get_object_or_error(project.issues.all(), request.user,
+            query = get_issue_scope_query(request.user, project)
+            result["issue"] = get_object_or_error(project.issues.all().filter(query), request.user,
                                                   ref=data["issue"]).pk
         if data["milestone"] and user_has_perm(request.user, "view_milestones", project):
             result["milestone"] = get_object_or_error(project.milestones.all(), request.user,
@@ -75,7 +77,7 @@ class ResolverViewSet(viewsets.ViewSet):
                         ref_found = True
                 if ref_found is False and user_has_perm(request.user, "view_issues", project):
                     issue = project.issues.filter(ref=value).first()
-                    if issue:
+                    if issue and issue.scope in get_allowed_scopes(request.user, project):
                         result["issue"] = issue.pk
             except:
                 value = data["ref"]

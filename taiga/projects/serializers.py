@@ -19,6 +19,7 @@ from taiga.permissions.services import calculate_permissions
 from taiga.permissions.services import is_project_admin, is_project_owner
 
 from . import services
+from .issues.utils import get_allowed_scopes
 from .notifications.choices import NotifyLevel
 
 
@@ -349,7 +350,8 @@ class ProjectSerializer(serializers.LightSerializer):
                                          is_admin=self.get_i_am_admin(obj),
                                          role_permissions=obj.my_role_permissions_attr,
                                          anon_permissions=obj.anon_permissions,
-                                         public_permissions=obj.public_permissions)
+                                         public_permissions=obj.public_permissions,
+                                         issue_scope_permissions=get_allowed_scopes(user, obj, "edit"))
         return []
 
     def get_owner(self, obj):
@@ -607,7 +609,8 @@ class ProjectLightSerializer(serializers.LightSerializer):
                                          is_admin=self.get_i_am_admin(obj),
                                          role_permissions=obj.my_role_permissions_attr,
                                          anon_permissions=obj.anon_permissions,
-                                         public_permissions=obj.public_permissions)
+                                         public_permissions=obj.public_permissions,
+                                         issue_scope_permissions=get_allowed_scopes(user, obj, "edit"))
         return []
 
     def get_owner(self, obj):

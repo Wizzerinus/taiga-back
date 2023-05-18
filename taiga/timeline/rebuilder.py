@@ -47,6 +47,12 @@ def custom_add_to_object_timeline(obj:object, instance:object, event_type:str, c
     event_type_key = _get_impl_key_from_model(instance.__class__, event_type)
     impl = _timeline_impl_map.get(event_type_key, None)
 
+    # This is horrible code design, but I don't know how to do this properly
+    if instance.__class__.__name__ == "Issue" and instance.scope != "normal":
+        extra_permission = f"view_issues_{instance.scope}"
+    else:
+        extra_permission = ""
+
     bulk_creator.create_element(Timeline(
         content_object=obj,
         namespace=namespace,
@@ -55,6 +61,7 @@ def custom_add_to_object_timeline(obj:object, instance:object, event_type:str, c
         data=impl(instance, extra_data=extra_data),
         data_content_type=ContentType.objects.get_for_model(instance.__class__),
         created=created_datetime,
+        extra_permission=extra_permission,
     ))
 
 

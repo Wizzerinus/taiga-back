@@ -36,6 +36,7 @@ from django_pglocks import advisory_lock
 
 from .models import HistoryChangeNotification, Watched
 from .squashing import squash_history_entries
+from taiga.projects.issues.utils import get_allowed_scopes
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,8 @@ def _filter_by_permissions(obj, user):
     if isinstance(obj, UserStory):
         return user_has_perm(user, "view_us", obj, cache="project")
     elif isinstance(obj, Issue):
-        return user_has_perm(user, "view_issues", obj, cache="project")
+        return user_has_perm(user, "view_issues", obj, cache="project") and \
+            obj.scope in get_allowed_scopes(user, obj)
     elif isinstance(obj, Task):
         return user_has_perm(user, "view_tasks", obj, cache="project")
     elif isinstance(obj, Epic):

@@ -9,6 +9,8 @@ import re
 
 from django.utils.translation import gettext as _
 from django.contrib.auth import get_user_model
+
+from taiga.projects.issues.utils import get_allowed_scopes
 from taiga.projects.models import IssueStatus, TaskStatus, UserStoryStatus, EpicStatus, ProjectModulesConfig
 from taiga.projects.epics.models import Epic
 from taiga.projects.issues.models import Issue
@@ -179,6 +181,9 @@ class BaseIssueEventHook(BaseEventHook):
 
     def _create_issue(self, data):
         user = self.get_user(data["user_id"], self.platform_slug)
+        scope = data.get("scope")
+        if scope not in get_allowed_scopes(user, self.project, "edit"):
+            scope = "normal"
 
         issue = Issue.objects.create(
             project=self.project,
@@ -189,7 +194,8 @@ class BaseIssueEventHook(BaseEventHook):
             severity=self.project.default_severity,
             priority=self.project.default_priority,
             external_reference=[self.platform_slug, data['url']],
-            owner=user
+            owner=user,
+            scope=scope
         )
         take_snapshot(issue, user=user)
 

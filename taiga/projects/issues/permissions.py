@@ -25,12 +25,17 @@ class IssuePermission(TaigaResourcePermission):
     csv_perms = AllowAny()
     bulk_create_perms = HasProjectPerm('add_issue')
     bulk_update_milestone_perms = HasProjectPerm('modify_issue')
-    delete_comment_perms= HasProjectPerm('modify_issue')
+    delete_comment_perms = HasProjectPerm('modify_issue')
     upvote_perms = IsAuthenticated() & HasProjectPerm('view_issues')
     downvote_perms = IsAuthenticated() & HasProjectPerm('view_issues')
     watch_perms = IsAuthenticated() & HasProjectPerm('view_issues')
     unwatch_perms = IsAuthenticated() & HasProjectPerm('view_issues')
     promote_to_us_perms = IsAuthenticated() & HasProjectPerm('add_us')
+
+    retrieve_issues_testing_perms = HasProjectPerm('view_issues_testing')
+    retrieve_issues_security_perms = HasProjectPerm('view_issues_security')
+    edit_issues_testing_perms = HasProjectPerm('edit_issues_testing')
+    edit_issues_security_perms = HasProjectPerm('edit_issues_security')
 
 
 class IssueVotersPermission(TaigaResourcePermission):

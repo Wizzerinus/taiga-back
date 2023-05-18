@@ -80,16 +80,18 @@ def _get_membership_permissions(membership):
 
 def calculate_permissions(is_authenticated=False, is_superuser=False, is_member=False,
                           is_admin=False, role_permissions=[], anon_permissions=[],
-                          public_permissions=[]):
+                          public_permissions=[], issue_scope_permissions=[]):
     if is_superuser:
         admins_permissions = list(map(lambda perm: perm[0], ADMINS_PERMISSIONS))
         members_permissions = list(map(lambda perm: perm[0], MEMBERS_PERMISSIONS))
         public_permissions = []
         anon_permissions = list(map(lambda perm: perm[0], ANON_PERMISSIONS))
+        issue_scope_permissions = ["testing", "security"]
     elif is_member:
         if is_admin:
             admins_permissions = list(map(lambda perm: perm[0], ADMINS_PERMISSIONS))
             members_permissions = list(map(lambda perm: perm[0], MEMBERS_PERMISSIONS))
+            issue_scope_permissions = ["testing", "security"]
         else:
             admins_permissions = []
             members_permissions = []
@@ -107,7 +109,9 @@ def calculate_permissions(is_authenticated=False, is_superuser=False, is_member=
         public_permissions = []
         anon_permissions = anon_permissions if anon_permissions is not None else []
 
-    return set(admins_permissions + members_permissions + public_permissions + anon_permissions)
+    issue_scope_permissions = [f"issues_{x}" for x in issue_scope_permissions]
+    return set(admins_permissions + members_permissions + public_permissions +
+               anon_permissions + issue_scope_permissions)
 
 
 def get_user_project_permissions(user, project, cache="user"):

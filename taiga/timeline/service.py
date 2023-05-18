@@ -51,6 +51,12 @@ def _add_to_object_timeline(obj: object, instance: object, event_type: str, crea
     event_type_key = _get_impl_key_from_model(instance.__class__, event_type)
     impl = _timeline_impl_map.get(event_type_key, None)
 
+    # This is horrible code design, but I don't know how to do this properly
+    if instance.__class__.__name__ == "Issue" and instance.scope != "normal":
+        extra_permission = f"view_issues_{instance.scope}"
+    else:
+        extra_permission = ""
+
     project = None
     if hasattr(instance, "project"):
         project = instance.project
@@ -63,6 +69,7 @@ def _add_to_object_timeline(obj: object, instance: object, event_type: str, crea
         data=impl(instance, extra_data=extra_data),
         data_content_type=ContentType.objects.get_for_model(instance.__class__),
         created=created_datetime,
+        extra_permission=extra_permission,
     )
 
 
@@ -150,7 +157,8 @@ def filter_timeline_for_user(timeline, user, namespace=None):
         return timeline
 
     # Filtering entities from public projects or entities without project
-    tl_filter = Q(project__is_private=False) | Q(project=None)
+    # Only entities without extra_permission are publicly visible even in public projects
+    tl_filter = Q(project__is_private=False, extra_permission="") | Q(project=None)
 
     # Filtering private project with some public parts
     content_types = {
@@ -167,7 +175,8 @@ def filter_timeline_for_user(timeline, user, namespace=None):
     for content_type_key, content_type in content_types.items():
         tl_filter |= Q(project__is_private=True,
                        project__anon_permissions__contains=[content_type_key],
-                       data_content_type=content_type)
+                       data_content_type=content_type,
+                       extra_permission="")
 
     # There is no specific permission for seeing new memberships
     membership_content_type = ContentType.objects.get_by_natural_key(app_label="projects", model="membership")
@@ -185,7 +194,16 @@ def filter_timeline_for_user(timeline, user, namespace=None):
                 data_content_types = list(filter(None, [content_types.get(a, None) for a in
                                                         membership.role.permissions]))
                 data_content_types.append(membership_content_type)
-                tl_filter |= Q(project=membership.project, data_content_type__in=data_content_types)
+
+                # Again, horrible code design
+                # As of right now, the issues you can create but not read (security) wouldn't be displayed here
+                allowed_extra_perms = [""]
+                for scope in ["testing", "security"]:
+                    if f"view_issues_{scope}" in membership.role.permissions:
+                        allowed_extra_perms.append(scope)
+
+                tl_filter |= Q(project=membership.project, data_content_type__in=data_content_types,
+                               extra_permission__in=allowed_extra_perms)
 
     timeline = timeline.filter(tl_filter)
 

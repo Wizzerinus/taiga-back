@@ -25,6 +25,7 @@ class Timeline(models.Model):
     data = JSONField()
     data_content_type = models.ForeignKey(ContentType, related_name="data_timelines", on_delete=models.CASCADE)
     created = models.DateTimeField(default=timezone.now, db_index=True)
+    extra_permission = models.CharField(max_length=250, default="", db_index=True, null=True)
 
     class Meta:
         indexes = [

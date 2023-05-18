@@ -4,7 +4,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # Copyright (c) 2021-present Kaleidos Ventures SL
+from django.db.models import Q
 
+from taiga.permissions.services import user_has_perm
 from taiga.projects.attachments.utils import attach_basic_attachments
 from taiga.projects.notifications.utils import attach_watchers_to_queryset
 from taiga.projects.notifications.utils import attach_total_watchers_to_queryset
@@ -48,3 +50,18 @@ def attach_extra_info(queryset, user=None, include_attachments=False):
     queryset = attach_is_voter_to_queryset(queryset, user)
     queryset = attach_is_watcher_to_queryset(queryset, user)
     return queryset
+
+
+def get_allowed_scopes(user, project, target="view") -> list[str]:
+    allow_normal = True
+    allow_testing = user_has_perm(user, f"{target}_issues_testing", project)
+    allow_security = user_has_perm(user, f"{target}_issues_security", project)
+    allowed_scopes = []
+    for perm, name in [(allow_normal, "normal"), (allow_testing, "testing"), (allow_security, "security")]:
+        if perm:
+            allowed_scopes.append(name)
+    return allowed_scopes
+
+
+def get_issue_scope_query(user, project):
+    return Q(scope__in=get_allowed_scopes(user, project)) | Q(owner=user)

@@ -49,6 +49,11 @@ MEMBERS_PERMISSIONS = [
     ('modify_issue', _('Modify issue')),
     ('comment_issue', _('Comment issue')),
     ('delete_issue', _('Delete issue')),
+    # Issue permissions (scoped)
+    ('view_issues_testing', _('View issues (Testing)')),
+    ('edit_issues_testing', _('Edit issues (Testing)')),
+    ('view_issues_security', _('View issues (Security)')),
+    ('edit_issues_security', _('Edit issues (Security)')),
     # Wiki page permissions
     ('view_wiki_pages', _('View wiki pages')),
     ('add_wiki_page', _('Add wiki page')),

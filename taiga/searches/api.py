@@ -19,6 +19,9 @@ from . import serializers
 
 from concurrent import futures
 
+from taiga.projects.issues.utils import get_issue_scope_query
+
+
 class SearchViewSet(viewsets.ViewSet):
     def list(self, request, **kwargs):
         text = request.QUERY_PARAMS.get('text', "")
@@ -42,7 +45,8 @@ class SearchViewSet(viewsets.ViewSet):
                 tasks_future.result_key = "tasks"
                 futures_list.append(tasks_future)
             if user_has_perm(request.user, "view_issues", project):
-                issues_future = executor.submit(self._search_issues, project, text)
+                scope_query = get_issue_scope_query(request.user, project)
+                issues_future = executor.submit(self._search_issues, project, text, scope_query)
                 issues_future.result_key = "issues"
                 futures_list.append(issues_future)
             if user_has_perm(request.user, "view_wiki_pages", project):
@@ -81,8 +85,8 @@ class SearchViewSet(viewsets.ViewSet):
         serializer = serializers.TaskSearchResultsSerializer(queryset, many=True)
         return serializer.data
 
-    def _search_issues(self, project, text):
-        queryset = services.search_issues(project, text)
+    def _search_issues(self, project, text, scope_query):
+        queryset = services.search_issues(project, text, scope_query)
         serializer = serializers.IssueSearchResultsSerializer(queryset, many=True)
         return serializer.data
 

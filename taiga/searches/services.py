@@ -34,9 +34,9 @@ def search_tasks(project, text):
     return _search_items(queryset, table, text)
 
 
-def search_issues(project, text):
+def search_issues(project, text, scope_query):
     model = apps.get_model("issues", "Issue")
-    queryset = model.objects.filter(project_id=project.pk)
+    queryset = model.objects.filter(project_id=project.pk).filter(scope_query)
     table = "issues_issue"
     return _search_items(queryset, table, text)
 

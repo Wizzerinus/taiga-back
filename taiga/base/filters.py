@@ -172,6 +172,55 @@ class PermissionBasedFilterBackend(FilterBackend):
         return super().filter_queryset(request, qs, view)
 
 
+def make_issue_scope_query(project_field, scope_target):
+    project_target = f"project__{project_field}__contains"
+    value = Q(scope="normal") & Q(**{project_target: ["view_issues"]})
+    for scope in ["testing", "security"]:
+        value |= Q(scope=scope) & Q(**{project_target: [f"{scope_target}_issues_scope"]})
+    return value
+
+
+class IssueScopeFilterBackend(FilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        project_id = None
+        if (hasattr(view, "filter_fields") and "project" in view.filter_fields and
+                "project" in request.QUERY_PARAMS):
+            try:
+                project_id = int(request.QUERY_PARAMS["project"])
+            except (ValueError, KeyError, TypeError):
+                logger.error("Filtering project diferent value than an integer: {}".format(
+                    request.QUERY_PARAMS["project"]
+                ))
+                raise exc.BadRequest(_("'project' must be an integer value."))
+
+        project_model = apps.get_model('projects', 'Membership')
+        checked_target = "view" if request.method == "GET" else "edit"
+        if request.user.is_authenticated:
+            if not request.user.is_superuser:
+                memberships = list(project_model.objects.filter(user=request.user))
+                roles = [membership.role for membership in memberships]
+                query = Q(scope="normal") & Q(project__in=[role.project for role in roles
+                                                           if "view_issues" in role.permissions])
+                for scope in ["security", "testing"]:
+                    good_projects = [role.project for role in roles
+                                     if f"{checked_target}_issues_{scope}" in role.permissions]
+                    query |= Q(scope=scope) & Q(project__in=good_projects)
+            else:
+                # Always true (superusers can see everything)
+                query = ~Q(pk__in=[])
+
+            query |= make_issue_scope_query("public_permissions", checked_target)
+            query |= Q(owner=request.user)
+        else:
+            query = make_issue_scope_query("anon_permissions", checked_target)
+
+        if project_id:
+            query &= Q(project=project_id)
+        qs = queryset.filter(query)
+
+        return super().filter_queryset(request, qs, view)
+
+
 def custom_filter_class(base_class, **kwargs):
     """
     This function is useful to create custom filter classes based on other classes.

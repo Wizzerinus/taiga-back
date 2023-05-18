@@ -38,7 +38,22 @@ from . import serializers
 from . import validators
 
 
-class IssueViewSet(AssignedToSignalMixin, OCCResourceMixin, VotedResourceMixin,
+class IssuePermissionsMixin:
+    def check_permissions(self, request, action=None, obj=None):
+        if not obj or obj.scope == "normal":
+            return super().check_permissions(request, action, obj)
+
+        if action in ("retrieve", "upvote", "downvote", "watch", "unwatch"):
+            target_action = "retrieve"
+        else:
+            target_action = "edit"
+
+        if obj.owner != request.user:
+            super().check_permissions(request, f"{target_action}_issues_{obj.scope}", obj)
+        super().check_permissions(request, action, obj)
+
+
+class IssueViewSet(IssuePermissionsMixin, AssignedToSignalMixin, OCCResourceMixin, VotedResourceMixin,
                    HistoryResourceMixin, WatchedResourceMixin, ByRefMixin,
                    TaggedResourceMixin, BlockedByProjectMixin, PromoteToUserStoryMixin,
                    ModelCrudViewSet):
@@ -46,6 +61,7 @@ class IssueViewSet(AssignedToSignalMixin, OCCResourceMixin, VotedResourceMixin,
     queryset = models.Issue.objects.all()
     permission_classes = (permissions.IssuePermission, )
     filter_backends = (filters.CanViewIssuesFilterBackend,
+                       filters.IssueScopeFilterBackend,
                        filters.RoleFilter,
                        filters.OwnersFilter,
                        filters.AssignedToFilter,
@@ -263,11 +279,11 @@ class IssueViewSet(AssignedToSignalMixin, OCCResourceMixin, VotedResourceMixin,
         return response.Ok(ret)
 
 
-class IssueVotersViewSet(VotersViewSetMixin, ModelListViewSet):
+class IssueVotersViewSet(IssuePermissionsMixin, VotersViewSetMixin, ModelListViewSet):
     permission_classes = (permissions.IssueVotersPermission,)
     resource_model = models.Issue
 
 
-class IssueWatchersViewSet(WatchersViewSetMixin, ModelListViewSet):
+class IssueWatchersViewSet(IssuePermissionsMixin, WatchersViewSetMixin, ModelListViewSet):
     permission_classes = (permissions.IssueWatchersPermission,)
     resource_model = models.Issue

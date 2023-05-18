@@ -30,6 +30,7 @@ class IssueListSerializer(VoteResourceSerializerMixin, WatchedResourceSerializer
     ref = Field()
     severity = Field(attr="severity_id")
     priority = Field(attr="priority_id")
+    scope = Field()
     type = Field(attr="type_id")
     milestone = Field(attr="milestone_id")
     project = Field(attr="project_id")

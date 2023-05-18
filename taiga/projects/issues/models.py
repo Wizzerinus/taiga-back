@@ -90,6 +90,10 @@ class Issue(OCCModelMixin, WatchedModelMixin, BlockedMixin, TaggedMixin, DueDate
                                          verbose_name=_("finished date"))
     subject = models.TextField(null=False, blank=False,
                                verbose_name=_("subject"))
+    scope = models.TextField(
+        null=False, blank=False, verbose_name=_("scope"), default="normal",
+        choices=[("normal", "Normal"), ("testing", "Test Server"), ("security", "Security")]
+    )
     description = models.TextField(null=False, blank=True, verbose_name=_("description"))
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,
