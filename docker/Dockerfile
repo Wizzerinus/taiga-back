@@ -18,8 +18,6 @@ ENV PYTHONFAULTHANDLER=1
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Get the code
-COPY . /taiga-back
 WORKDIR /taiga-back
 
 # grab gosu for easy step-down from root
@@ -50,9 +48,11 @@ RUN set -eux; \
 	gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4; \
 	gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu; \
 	command -v gpgconf && gpgconf --kill all || :; \
-	rm -rf "$GNUPGHOME" /usr/local/bin/gosu.asc; \
-    # install Taiga dependencies
-    python -m pip install --upgrade pip; \
+	rm -rf "$GNUPGHOME" /usr/local/bin/gosu.asc
+# install Taiga dependencies
+COPY requirements.txt requirements.txt
+COPY requirements-contribs.txt requirements-contribs.txt
+RUN python -m pip install --upgrade pip; \
     python -m pip install wheel; \
     python -m pip install -r requirements.txt; \
     python -m pip install -r requirements-contribs.txt; \
@@ -63,8 +63,12 @@ RUN set -eux; \
     cp docker/config.py settings/config.py; \
     #  create taiga group and user to use it and give permissions over the code (in entrypoint)
     groupadd --system taiga --gid=999; \
-    useradd --system --no-create-home --gid taiga --uid=999 --shell=/bin/bash taiga; \
-    mkdir -p /taiga-back/media/exports; \
+    useradd --system --no-create-home --gid taiga --uid=999 --shell=/bin/bash taiga
+
+# Get the code
+COPY . /taiga-back
+# Prepare the installation
+RUN mkdir -p /taiga-back/media/exports; \
     chown -R taiga:taiga /taiga-back; \
     # remove unneeded files and packages
     apt-get purge -y \
