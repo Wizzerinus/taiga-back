@@ -14,7 +14,6 @@ easy-thumbnails==2.8.5
 gunicorn==20.1.0
 netaddr<0.9
 premailer==3.0.1
-psd-tools==1.9.18
 psycopg2<2.10  # required by django
 python-dateutil==2.7.5
 python-magic==0.4.15

@@ -7,7 +7,6 @@
 
 import os
 
-from psd_tools import PSDImage
 from django.db.models.fields.files import FieldFile
 
 from taiga.base.utils.urls import get_absolute_url
@@ -49,17 +48,6 @@ except Exception:
 Image.init()
 
 
-# PSD thumbnail generator
-def psd_image_factory(data, *args):
-    try:
-        return PSDImage.open(data).compose()
-    except Exception:
-        raise TypeError
-
-
-Image.register_open("PSD", psd_image_factory)
-
-
 def get_thumbnail(file_obj, thumbnailer_size):
     # Ugly hack to temporary ignore tiff files
     relative_name = file_obj
@@ -67,7 +55,7 @@ def get_thumbnail(file_obj, thumbnailer_size):
         relative_name = file_obj.name
 
     source_extension = os.path.splitext(relative_name)[1][1:]
-    if source_extension.lower() not in ('png', 'svg', 'gif', 'bmp', 'jpeg', 'jpg', 'psd'):
+    if source_extension.lower() not in ('png', 'svg', 'gif', 'bmp', 'jpeg', 'jpg'):
         return None
 
     try:
