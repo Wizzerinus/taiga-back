@@ -122,6 +122,7 @@ CELERY_TASK_DEFAULT_ROUTING_KEY = 'task.default'
 #########################################
 PUBLIC_REGISTER_ENABLED = os.getenv('PUBLIC_REGISTER_ENABLED', 'false') == 'true'
 HIDDEN_USERS_ENABLED = os.getenv('HIDDEN_USERS_ENABLED', 'False') == 'True'
+REQUIRE_EMAIL_VERIFICATION_TO_ADD_MEMBERS = os.getenv('REQUIRE_EMAIL_VERIFICATION_TO_ADD_MEMBERS', 'True') == 'True'
 
 
 #########################################

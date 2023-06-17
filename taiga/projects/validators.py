@@ -4,7 +4,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # Copyright (c) 2021-present Kaleidos Ventures SL
-
+from django.conf import settings
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
@@ -225,6 +225,9 @@ class MembershipValidator(validators.ModelValidator):
         return attrs
 
     def validate(self, attrs):
+        if not settings.REQUIRE_EMAIL_VERIFICATION_TO_ADD_MEMBERS:
+            return super().validate(attrs)
+
         request = self.context.get("request", None)
         if request is not None and request.user.is_authenticated and not request.user.verified_email:
             raise ValidationError(_("To add members to a project, first you have to verify your email address"))
