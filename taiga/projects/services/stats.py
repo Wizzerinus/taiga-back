@@ -361,6 +361,16 @@ def _get_closed_bugs_per_member_stats(project):
     return closed_bugs
 
 
+def _get_assigned_bugs_per_member_stats(project):
+    # Closed bugs per user
+    closed_bugs = project.issues.filter(status__is_closed=False)\
+        .values('assigned_to')\
+        .annotate(count=Count('assigned_to'))\
+        .order_by()
+    closed_bugs = { p["assigned_to"]: p["count"] for p in closed_bugs}
+    return closed_bugs
+
+
 def _get_iocaine_tasks_per_member_stats(project):
     # Iocaine tasks assigned per user
     iocaine_tasks = project.tasks.filter(is_iocaine=True)\
@@ -404,24 +414,37 @@ def _get_closed_tasks_per_member_stats(project):
     return closed_tasks
 
 
+def _get_assigned_tasks_per_member_stats(project):
+    # Closed tasks
+    closed_tasks = project.tasks.filter(status__is_closed=False)\
+        .values('assigned_to')\
+        .annotate(count=Count('assigned_to'))\
+        .order_by()
+    closed_tasks = {p["assigned_to"]: p["count"] for p in closed_tasks}
+    return closed_tasks
+
+
 def get_member_stats_for_project(project):
     base_counters = {id: 0 for id in project.members.values_list("id", flat=True)}
     closed_bugs = base_counters.copy()
     closed_bugs.update(_get_closed_bugs_per_member_stats(project))
-    iocaine_tasks = base_counters.copy()
-    iocaine_tasks.update(_get_iocaine_tasks_per_member_stats(project))
     wiki_changes = base_counters.copy()
     wiki_changes.update(_get_wiki_changes_per_member_stats(project))
     created_bugs = base_counters.copy()
     created_bugs.update(_get_created_bugs_per_member_stats(project))
     closed_tasks = base_counters.copy()
     closed_tasks.update(_get_closed_tasks_per_member_stats(project))
+    assigned_bugs = base_counters.copy()
+    assigned_bugs.update(_get_assigned_bugs_per_member_stats(project))
+    assigned_tasks = base_counters.copy()
+    assigned_tasks.update(_get_assigned_tasks_per_member_stats(project))
 
     member_stats = {
         "closed_bugs": closed_bugs,
-        "iocaine_tasks": iocaine_tasks,
-        "wiki_changes": wiki_changes,
         "created_bugs": created_bugs,
+        "assigned_bugs": assigned_bugs,
         "closed_tasks": closed_tasks,
+        "assigned_tasks": assigned_tasks,
+        "wiki_changes": wiki_changes,
     }
     return member_stats
