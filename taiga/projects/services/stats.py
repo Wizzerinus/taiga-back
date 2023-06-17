@@ -457,7 +457,7 @@ def get_member_stats_for_project(project):
         "assigned_bugs": assigned_bugs,
         "closed_tasks": closed_tasks,
         "assigned_tasks": assigned_tasks,
-        "assigned_us": assigned_userstories,
+        "assigned_userstories": assigned_userstories,
         "wiki_changes": wiki_changes,
     }
     return member_stats
