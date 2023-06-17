@@ -362,13 +362,23 @@ def _get_closed_bugs_per_member_stats(project):
 
 
 def _get_assigned_bugs_per_member_stats(project):
-    # Closed bugs per user
-    closed_bugs = project.issues.filter(status__is_closed=False)\
+    # Assigned bugs, unclosed, per user
+    assigned_bugs = project.issues.filter(status__is_closed=False)\
         .values('assigned_to')\
         .annotate(count=Count('assigned_to'))\
         .order_by()
-    closed_bugs = { p["assigned_to"]: p["count"] for p in closed_bugs}
-    return closed_bugs
+    assigned_bugs = { p["assigned_to"]: p["count"] for p in assigned_bugs}
+    return assigned_bugs
+
+
+def _get_assigned_userstories_per_member_stats(project):
+    # Assigned user stories, unclosed, per user
+    assigned_us = project.user_stories.filter(status__is_closed=False)\
+        .values('assigned_users')\
+        .annotate(count=Count('assigned_users'))\
+        .order_by()
+    assigned_us = { p["assigned_users"]: p["count"] for p in assigned_us}
+    return assigned_us
 
 
 def _get_iocaine_tasks_per_member_stats(project):
@@ -438,6 +448,8 @@ def get_member_stats_for_project(project):
     assigned_bugs.update(_get_assigned_bugs_per_member_stats(project))
     assigned_tasks = base_counters.copy()
     assigned_tasks.update(_get_assigned_tasks_per_member_stats(project))
+    assigned_userstories = base_counters.copy()
+    assigned_userstories.update(_get_assigned_userstories_per_member_stats(project))
 
     member_stats = {
         "closed_bugs": closed_bugs,
@@ -445,6 +457,7 @@ def get_member_stats_for_project(project):
         "assigned_bugs": assigned_bugs,
         "closed_tasks": closed_tasks,
         "assigned_tasks": assigned_tasks,
+        "assigned_us": assigned_userstories,
         "wiki_changes": wiki_changes,
     }
     return member_stats
