@@ -4,9 +4,11 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # Copyright (c) 2021-present Kaleidos Ventures SL
-
+import itertools
 import uuid
-import functools
+import datetime
+
+import pytz
 from easy_thumbnails.source_generators import pil_image
 from dateutil.relativedelta import relativedelta
 
@@ -25,7 +27,7 @@ from taiga.base.api import ModelCrudViewSet, ModelListViewSet, ModelUpdateRetrie
 from taiga.base.api.mixins import BlockedByProjectMixin, BlockeableSaveMixin, BlockeableDeleteMixin
 from taiga.base.api.permissions import AllowAnyPermission
 from taiga.base.api.utils import get_object_or_error
-from taiga.base.api.viewsets import ViewSet
+from taiga.base.api.viewsets import ModelRetrieveViewSet, ViewSet
 from taiga.base.decorators import list_route
 from taiga.base.decorators import detail_route
 from taiga.base.utils.slug import slugify_uniquely
@@ -60,6 +62,7 @@ from . import throttling
 # Project
 ######################################################
 from ..base.exceptions import NotAuthenticated
+from ..permissions.services import user_has_perm
 
 
 class ProjectViewSet(LikedResourceMixin, HistoryResourceMixin,
@@ -449,6 +452,54 @@ class ProjectViewSet(LikedResourceMixin, HistoryResourceMixin,
         reason = request.DATA.get('reason', None)
         services.reject_project_transfer(project, request.user, token, reason)
         return response.Ok()
+
+    @list_route(methods=["GET"])
+    def employee_log(self, request):
+        # We can't use getObject due to some weird mechanics of the backend, let's lod the project manually
+        project_id = self.request.QUERY_PARAMS.get("project")
+        project = get_object_or_error(self.get_queryset(), request.user, pk=project_id)
+        if not project:
+            return None
+
+        is_employee = user_has_perm(request.user, "is_employee", project)
+        is_manager = user_has_perm(request.user, "is_management", project)
+        if not is_employee and not is_manager:
+            return response.Forbidden()
+
+        if not project.is_employee_log_activated:
+            return response.BadRequest()
+
+        target_user = self.request.user.username
+        if is_manager and (employee_id := self.request.QUERY_PARAMS.get("employeeId")):
+            target_user = employee_id
+
+        us_model = apps.get_model("userstories", "UserStory")
+        t_model = apps.get_model("tasks", "Task")
+        i_model = apps.get_model("issues", "Issue")
+        user_stories = (
+            us_model.objects.select_related("swimlane", "status")
+            .filter(assigned_users__username=target_user, project=project).order_by("-finish_date", "-created_date")
+        )
+        tasks = (
+            t_model.objects.select_related("status", "user_story__swimlane")
+            .filter(assigned_to__username=target_user, project=project).order_by("-finished_date", "-created_date")
+        )
+        issues = (
+            i_model.objects.select_related("status")
+            .filter(assigned_to__username=target_user, project=project).order_by("-finished_date", "-created_date")
+        )
+
+        # serialize everything
+        user_stories = serializers.EmployeeLogUserStorySerializer(user_stories, many=True).data
+        tasks = serializers.EmployeeLogTaskSerializer(tasks, many=True).data
+        issues = serializers.EmployeeLogIssueSerializer(issues, many=True).data
+        future_datetime = datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(hours=25)
+        values = sorted(
+            itertools.chain(user_stories, tasks, issues),
+            key=lambda c: (c["date"] or future_datetime, c["created_date"] or future_datetime),
+            reverse=True,
+        )
+        return response.Ok(values)
 
     @detail_route(methods=["POST"])
     def duplicate(self, request, pk=None):

@@ -72,6 +72,9 @@ MEMBERS_PERMISSIONS = [
     ('add_wiki_link', _('Add wiki link')),
     ('modify_wiki_link', _('Modify wiki link')),
     ('delete_wiki_link', _('Delete wiki link')),
+    # Employee log permissions
+    ('is_employee', _('Listed on the Employee page')),
+    ('is_management', _("Can access other employees' logs"))
 ]
 
 ADMINS_PERMISSIONS = [

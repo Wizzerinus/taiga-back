@@ -266,6 +266,7 @@ class ProjectSerializer(serializers.LightSerializer):
     is_kanban_activated = Field()
     is_wiki_activated = Field()
     is_issues_activated = Field()
+    is_employee_log_activated = Field()
     videoconferences = Field()
     videoconferences_extra_data = Field()
     creation_template = Field(attr="creation_template_id")
@@ -529,6 +530,7 @@ class ProjectLightSerializer(serializers.LightSerializer):
     is_kanban_activated = Field()
     is_wiki_activated = Field()
     is_issues_activated = Field()
+    is_employee_log_activated = Field()
     videoconferences = Field()
     videoconferences_extra_data = Field()
     creation_template = Field(attr="creation_template_id")
@@ -681,6 +683,7 @@ class ProjectTemplateSerializer(serializers.LightSerializer):
     is_kanban_activated = Field()
     is_wiki_activated = Field()
     is_issues_activated = Field()
+    is_employee_log_activated = Field()
     videoconferences = Field()
     videoconferences_extra_data = Field()
     default_options = Field()
@@ -693,3 +696,55 @@ class ProjectTemplateSerializer(serializers.LightSerializer):
     priorities = Field()
     severities = Field()
     roles = Field()
+
+
+######################################################
+# Employee Log
+######################################################
+class EmployeeLogSerializer(serializers.LightSerializer):
+    ref = Field()
+    name = Field(attr="subject")
+    status = MethodField()
+    date = Field(attr="finished_date")
+    created_date = Field()
+    category = MethodField()
+    type = MethodField()
+    color = MethodField()
+
+    def get_status(self, obj):
+        return obj.status.name
+
+    def get_color(self, obj):
+        return obj.status.color
+
+    def get_category(self, obj):
+        return ""
+
+    def get_type(self, obj):
+        return ""
+
+
+class EmployeeLogUserStorySerializer(EmployeeLogSerializer):
+    date = Field(attr="finish_date")
+
+    def get_type(self, obj):
+        return "userstory"
+
+    def get_category(self, obj):
+        return obj.swimlane.name if obj.swimlane else "Unknown"
+
+
+class EmployeeLogTaskSerializer(EmployeeLogSerializer):
+    def get_type(self, obj):
+        return "task"
+
+    def get_category(self, obj):
+        return obj.user_story.swimlane.name if obj.user_story.swimlane else "Unknown"
+
+
+class EmployeeLogIssueSerializer(EmployeeLogSerializer):
+    def get_type(self, obj):
+        return "issue"
+
+    def get_category(self, obj):
+        return "Game Bugfix"

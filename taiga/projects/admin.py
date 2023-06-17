@@ -103,7 +103,8 @@ class ProjectAdmin(admin.ModelAdmin):
                        "is_kanban_activated",
                        "is_issues_activated",
                        "is_wiki_activated",
-                       ("videoconferences", "videoconferences_extra_data")),
+                       ("videoconferences", "videoconferences_extra_data"),
+                       "is_employee_log_activated"),
         }),
         (_("Default values"), {
             "classes": ("collapse",),

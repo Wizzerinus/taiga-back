@@ -439,6 +439,7 @@ class ProjectExportSerializer(WatcheableObjectLightSerializerMixin):
     is_kanban_activated = Field()
     is_wiki_activated = Field()
     is_issues_activated = Field()
+    is_employee_log_activated = Field()
     videoconferences = Field()
     videoconferences_extra_data = Field()
     creation_template = SlugRelatedField(slug_field="slug")

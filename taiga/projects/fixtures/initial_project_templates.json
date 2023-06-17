@@ -15,6 +15,7 @@
         "is_kanban_activated": false,
         "is_wiki_activated": true,
         "is_issues_activated": true,
+        "is_employee_log_activated": true,
         "videoconferences": null,
         "videoconferences_extra_data": "",
         "default_options": {
@@ -442,7 +443,8 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_employee"
                 ]
             },
             {
@@ -486,7 +488,8 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_employee"
                 ]
             },
             {
@@ -530,7 +533,8 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_employee"
                 ]
             },
             {
@@ -575,7 +579,8 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_employee"
                 ]
             },
             {
@@ -620,7 +625,9 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_employee",
+                    "is_management"
                 ]
             },
             {
@@ -648,7 +655,8 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_management"
                 ]
             }
         ],
@@ -674,6 +682,7 @@
         "is_kanban_activated": true,
         "is_wiki_activated": false,
         "is_issues_activated": false,
+        "is_employee_log_activated": true,
         "videoconferences": null,
         "videoconferences_extra_data": "",
         "default_options": {
@@ -1101,7 +1110,8 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_employee"
                 ]
             },
             {
@@ -1145,7 +1155,8 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_employee"
                 ]
             },
             {
@@ -1189,7 +1200,8 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_employee"
                 ]
             },
             {
@@ -1234,7 +1246,8 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_employee"
                 ]
             },
             {
@@ -1279,7 +1292,9 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_employee",
+                    "is_management"
                 ]
             },
             {
@@ -1310,7 +1325,8 @@
                     "comment_us",
                     "comment_task",
                     "comment_issue",
-                    "comment_wiki_page"
+                    "comment_wiki_page",
+                    "is_management"
                 ]
             }
         ],
