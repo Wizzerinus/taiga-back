@@ -15,17 +15,22 @@ pytestmark = pytest.mark.django_db(transaction=True)
 
 
 class AuxProjectModel(models.Model):
-    pass
+    class Meta:
+        app_label = "testenv"
 
 
 class AuxModelWithNameAttribute(models.Model):
     name = models.CharField(max_length=255, null=False, blank=False)
     project = models.ForeignKey(AuxProjectModel, null=False, blank=False, on_delete=models.CASCADE)
 
+    class Meta:
+        app_label = "testenv"
+
 
 class AuxValidator(DuplicatedNameInProjectValidator, ModelValidator):
     class Meta:
         model = AuxModelWithNameAttribute
+        app_label = "testenv"
 
 
 def test_duplicated_name_validation():
