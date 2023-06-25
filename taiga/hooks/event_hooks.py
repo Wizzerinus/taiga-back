@@ -291,6 +291,7 @@ class BaseIssueEventHook(BaseEventHook):
 class BasePushEventHook(BaseEventHook):
     PROBABLY_INDICATORS = ("maybe", "probably", "attempt", "hopefully")
     CLOSE_ISSUE_INDICATORS = ("close", "fix", "finish")
+    CLOSED_SLUGS = ("closed", "done")
 
     def get_data(self):
         raise NotImplementedError
@@ -374,11 +375,13 @@ class BasePushEventHook(BaseEventHook):
                 slug_options = ["ready-for-test", "in-progress"]
                 direction = "-slug"
             elif is_main_branch:
-                slug_options = ["closed", "done"]
+                slug_options = self.CLOSED_SLUGS
                 direction = "slug"
-            else:
+            elif element.status.slug not in self.CLOSED_SLUGS:
                 slug_options = ["fixed-on-staging", "done", "closed"]
                 direction = "-slug"
+            else:
+                return None
         else:
             slug_options = [action]
             direction = "-slug"

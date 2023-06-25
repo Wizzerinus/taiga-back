@@ -307,6 +307,59 @@ def test_custom_close_procedure_processing(client):
     assert issue3.status.id == rft_status.id
 
 
+def test_not_main_branch(client):
+    creation_status = f.IssueStatusFactory()
+    role = f.RoleFactory(project=creation_status.project, permissions=["view_issues"])
+    f.MembershipFactory(project=creation_status.project, role=role, user=creation_status.project.owner)
+    closed_status = f.IssueStatusFactory(name="Done", project=creation_status.project)
+    fos_status = f.IssueStatusFactory(name="Fixed on staging", project=creation_status.project)
+    issue1 = f.IssueFactory.create(status=creation_status, project=creation_status.project, owner=creation_status.project.owner)
+    issue1.status.id = closed_status.id
+    issue1.save()
+    payload = {
+        "commits": [
+            {"message": """Fixed #%s""" % (issue1.ref)},
+        ],
+        "ref": "refs/branches/not-main-branch",
+    }
+    mail.outbox = []
+    ev_hook1 = event_hooks.PushEventHook(issue1.project, payload)
+    ev_hook1.process_event()
+    issue1 = Issue.objects.get(id=issue1.id)
+    assert issue1.status.id == fos_status.id
+
+
+def test_commit_override(client):
+    creation_status = f.IssueStatusFactory()
+    role = f.RoleFactory(project=creation_status.project, permissions=["view_issues"])
+    f.MembershipFactory(project=creation_status.project, role=role, user=creation_status.project.owner)
+    closed_status = f.IssueStatusFactory(name="Done", project=creation_status.project)
+    f.IssueStatusFactory(name="Fixed on staging", project=creation_status.project)
+    issue1 = f.IssueFactory.create(status=creation_status, project=creation_status.project, owner=creation_status.project.owner)
+
+    payload = {
+        "commits": [
+            {"message": """Fixed #%s""" % (issue1.ref)},
+        ],
+        "ref": "refs/branches/master",
+    }
+    ev_hook1 = event_hooks.PushEventHook(issue1.project, payload)
+    ev_hook1.process_event()
+    issue1 = Issue.objects.get(id=issue1.id)
+    assert issue1.status.id == closed_status.id
+
+    payload = {
+        "commits": [
+            {"message": """Fixed #%s""" % (issue1.ref)},
+        ],
+        "ref": "refs/branches/not-main-branch",
+    }
+    ev_hook2 = event_hooks.PushEventHook(issue1.project, payload)
+    ev_hook2.process_event()
+    issue1 = Issue.objects.get(id=issue1.id)
+    assert issue1.status.id == closed_status.id
+
+
 def test_push_event_task_bad_processing_non_existing_ref(client):
     issue_status = f.IssueStatusFactory()
     payload = {"commits": [
