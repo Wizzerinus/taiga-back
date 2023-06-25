@@ -94,6 +94,7 @@ class PushEventHook(BaseGitHubEventHook, BasePushEventHook):
                 "commit_url": commit.get("url", None),
                 "commit_message": commit.get("message").strip(),
                 "commit_short_message": commit.get("message").split("\n")[0].strip(),
+                "main_branch": self.payload.get('ref', '').split('/')[-1] in ('main', 'master', 'develop'),
             })
 
         return result

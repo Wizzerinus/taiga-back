@@ -289,6 +289,9 @@ class BaseIssueEventHook(BaseEventHook):
 
 
 class BasePushEventHook(BaseEventHook):
+    PROBABLY_INDICATORS = ("maybe", "probably", "attempt", "hopefully")
+    CLOSE_ISSUE_INDICATORS = ("close", "fix", "finish")
+
     def get_data(self):
         raise NotImplementedError
 
@@ -360,50 +363,86 @@ class BasePushEventHook(BaseEventHook):
 
         return modelClass.objects.get(project=self.project, ref=ref)
 
-    def set_item_status(self, ref, status_slug):
+    def set_item_status(self, ref, action, is_attempt, is_main_branch):
         (modelClass, statusClass) = self.get_item_classes(ref)
         element = modelClass.objects.get(project=self.project, ref=ref)
 
-        try:
-            status = statusClass.objects.get(project=self.project, slug=status_slug)
-        except statusClass.DoesNotExist:
+        # TODO: allow changing this stuff in project settings.
+        # TODO: allow using actions other than "close".
+        if action == "__close":
+            if is_attempt:
+                slug_options = ["ready-for-test", "in-progress"]
+                direction = "-slug"
+            elif is_main_branch:
+                slug_options = ["closed", "done"]
+                direction = "slug"
+            else:
+                slug_options = ["fixed-on-staging", "done", "closed"]
+                direction = "-slug"
+        else:
+            slug_options = [action]
+            direction = "-slug"
+
+        status = statusClass.objects.filter(project=self.project, slug__in=slug_options).order_by(direction).first()
+        if status is None:
             raise ActionSyntaxException(_("The status doesn't exist"))
 
         src_status = element.status.name
         dst_status = status.name
+        if src_status == dst_status:
+            return None
 
         element.status = status
         element.save()
         return (element, src_status, dst_status)
+
+    @staticmethod
+    def parse_string(commit_message):
+        sentences = re.split(r"[.;!?]\s*|\n", commit_message)
+        result = {}
+
+        for sentence in sentences:
+            issue_numbers = re.findall(r"#(\d+)", sentence)
+            if not issue_numbers:
+                continue
+            status = sentence.split("#")[0].strip(" ,")
+            for issue_number in issue_numbers:
+                result[int(issue_number)] = status
+
+        return result
 
     def process_event(self):
         if self.ignore():
             return
         data = self.get_data()
 
+        ignored_refs = set()
         for commit in data:
-            consumed_refs = []
+            is_main_branch = commit.get("main_branch", True)
+            commit_references = self.parse_string(commit['commit_message'].lower())
+            for ref, status in commit_references.items():
+                action, is_attempt = None, False
+                if any(finish in status for finish in self.CLOSE_ISSUE_INDICATORS):
+                    action = "__close"
+                    is_attempt = any(probably in status for probably in self.PROBABLY_INDICATORS)
+                else:
+                    action = status
 
-            # Status changes
-            p = re.compile(r"tg-(\d+) +#([-\w]+)")
-            for m in p.finditer(commit['commit_message'].lower()):
-                ref = m.group(1)
-                status_slug = m.group(2)
-                (element, src_status, dst_status) = self.set_item_status(ref, status_slug)
+                if action and " " not in action:
+                    result = self.set_item_status(ref, action, is_attempt, is_main_branch)
+                else:
+                    result = False
 
-                comment = self.generate_status_change_comment(src_status=src_status, dst_status=dst_status, **commit)
-                snapshot = take_snapshot(element,
-                                         comment=comment,
-                                         user=self.get_user(commit["user_id"], self.platform_slug))
-                send_notifications(element, history=snapshot)
-                consumed_refs.append(ref)
+                if result is None:
+                    ignored_refs.add(int(ref))
 
             # Reference on commit
-            p = re.compile(r"tg-(\d+)")
+            p = re.compile(r"#(\d+)")
             for m in p.finditer(commit['commit_message'].lower()):
                 ref = m.group(1)
-                if ref in consumed_refs:
+                if int(ref) in ignored_refs:
                     continue
+
                 element = self.get_item_by_ref(ref)
                 type_name = element.__class__._meta.verbose_name
                 comment = self.generate_commit_reference_comment(type_name=type_name, **commit)
@@ -411,4 +450,3 @@ class BasePushEventHook(BaseEventHook):
                                          comment=comment,
                                          user=self.get_user(commit['user_id'], self.platform_slug))
                 send_notifications(element, history=snapshot)
-                consumed_refs.append(ref)

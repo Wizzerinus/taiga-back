@@ -76,5 +76,6 @@ class PushEventHook(BaseBitBucketEventHook, BasePushEventHook):
                     "commit_url": commit.get("links", {}).get('html', {}).get('href'),
                     "commit_message": message.strip(),
                     "commit_short_message": message.split("\n")[0].strip(),
+                    "main_branch": change.get('new', {}).get('name', '') in ('main', 'master', 'develop'),
                 })
         return result

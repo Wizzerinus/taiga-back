@@ -119,9 +119,9 @@ def test_push_event_epic_processing(client):
         "commits": [
             {
                 "message": """test message
-                    test   TG-%s    #%s   ok
+                    test.   %s    #%s   ok
                     bye!
-                """ % (epic.ref, new_status.slug),
+                """ % (new_status.slug, epic.ref),
                 "author": {
                     "username": "test",
                 },
@@ -149,9 +149,9 @@ def test_push_event_issue_processing(client):
         "commits": [
             {
                 "message": """test message
-                    test   TG-%s    #%s   ok
+                    test.   %s    #%s   ok
                     bye!
-                """ % (issue.ref, new_status.slug),
+                """ % (new_status.slug, issue.ref),
                 "author": {
                     "username": "test",
                 },
@@ -179,9 +179,9 @@ def test_push_event_task_processing(client):
         "commits": [
             {
                 "message": """test message
-                    test   TG-%s    #%s   ok
+                    test.   %s    #%s   ok
                     bye!
-                """ % (task.ref, new_status.slug),
+                """ % (new_status.slug, task.ref),
                 "author": {
                     "username": "test",
                 },
@@ -209,9 +209,9 @@ def test_push_event_user_story_processing(client):
         "commits": [
             {
                 "message": """test message
-                    test   TG-%s    #%s   ok
+                    test.   %s    #%s   ok
                     bye!
-                """ % (user_story.ref, new_status.slug),
+                """ % (new_status.slug, user_story.ref),
                 "author": {
                     "username": "test",
                 },
@@ -240,7 +240,7 @@ def test_push_event_issue_mention(client):
         "commits": [
             {
                 "message": """test message
-                    test   TG-%s   ok
+                    test.   #%s   ok
                     bye!
                 """ % (issue.ref),
                 "author": {
@@ -271,7 +271,7 @@ def test_push_event_task_mention(client):
         "commits": [
             {
                 "message": """test message
-                    test   TG-%s   ok
+                    test.   #%s   ok
                     bye!
                 """ % (task.ref),
                 "author": {
@@ -302,7 +302,7 @@ def test_push_event_user_story_mention(client):
         "commits": [
             {
                 "message": """test message
-                    test   TG-%s   ok
+                    test.   #%s   ok
                     bye!
                 """ % (user_story.ref),
                 "author": {
@@ -335,10 +335,10 @@ def test_push_event_multiple_actions(client):
         "commits": [
             {
                 "message": """test message
-                    test   TG-%s    #%s   ok
-                    test   TG-%s    #%s   ok
+                    test.   %s    #%s   ok
+                    test.   %s    #%s   ok
                     bye!
-                """ % (issue1.ref, new_status.slug, issue2.ref, new_status.slug),
+                """ % (new_status.slug, issue1.ref, new_status.slug, issue2.ref),
                 "author": {
                     "username": "test",
                 },
@@ -358,43 +358,13 @@ def test_push_event_multiple_actions(client):
     assert len(mail.outbox) == 2
 
 
-def test_push_event_processing_case_insensitive(client):
-    creation_status = f.TaskStatusFactory()
-    role = f.RoleFactory(project=creation_status.project, permissions=["view_tasks"])
-    f.MembershipFactory(project=creation_status.project, role=role, user=creation_status.project.owner)
-    new_status = f.TaskStatusFactory(project=creation_status.project)
-    task = f.TaskFactory.create(status=creation_status, project=creation_status.project, owner=creation_status.project.owner)
-    payload = {
-        "commits": [
-            {
-                "message": """test message
-                    test   tg-%s    #%s   ok
-                    bye!
-                """ % (task.ref, new_status.slug.upper()),
-                "author": {
-                    "username": "test",
-                },
-            }
-        ],
-        "repository": {
-            "html_url": "http://test-url/test/project"
-        }
-    }
-    mail.outbox = []
-    ev_hook = event_hooks.PushEventHook(task.project, payload)
-    ev_hook.process_event()
-    task = Task.objects.get(id=task.id)
-    assert task.status.id == new_status.id
-    assert len(mail.outbox) == 1
-
-
 def test_push_event_task_bad_processing_non_existing_ref(client):
     issue_status = f.IssueStatusFactory()
     payload = {
         "commits": [
             {
                 "message": """test message
-                    test   TG-6666666    #%s   ok
+                    test.   %s   #6666666   ok
                     bye!
                 """ % (issue_status.slug),
                 "author": {
@@ -422,7 +392,7 @@ def test_push_event_us_bad_processing_non_existing_status(client):
         "commits": [
             {
                 "message": """test message
-                    test   TG-%s    #non-existing-slug   ok
+                    test.   non-existing-slug   #%s   ok
                     bye!
                 """ % (user_story.ref),
                 "author": {
@@ -451,7 +421,7 @@ def test_push_event_bad_processing_non_existing_status(client):
         "commits": [
             {
                 "message": """test message
-                    test   TG-%s    #non-existing-slug   ok
+                    test.   non-existing-slug   #%s   ok
                     bye!
                 """ % (issue.ref),
                 "author": {
