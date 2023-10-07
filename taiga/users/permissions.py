@@ -35,7 +35,7 @@ class UserPermission(TaigaResourcePermission):
     by_username_perms = retrieve_perms
     update_perms = IsTheSameUser()
     partial_update_perms = IsTheSameUser()
-    destroy_perms = IsTheSameUser()
+    destroy_perms = IsSuperUser()
     list_perms = AllowAny()
     stats_perms = AllowAny()
     password_recovery_perms = AllowAny()
