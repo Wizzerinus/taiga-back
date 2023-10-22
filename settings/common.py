@@ -296,6 +296,8 @@ MIDDLEWARE = [
     # Common middlewares
     "django.middleware.common.CommonMiddleware",
     "django.middleware.locale.LocaleMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 
     # Only needed by django admin
@@ -576,7 +578,7 @@ PROJECT_MODULES_CONFIGURATORS = {
     "gogs": "taiga.hooks.gogs.services.get_or_generate_config",
 }
 
-# Odicial BitBucket valid IPs a https://confluence.atlassian.com/cloud/atlassian-cloud-ip-ranges-and-domains-744721662.html#AtlassiancloudIPrangesanddomains-OutgoingConnections
+# Official BitBucket valid IPs are https://confluence.atlassian.com/cloud/atlassian-cloud-ip-ranges-and-domains-744721662.html#AtlassiancloudIPrangesanddomains-OutgoingConnections
 BITBUCKET_VALID_ORIGIN_IPS = [
     "13.52.5.96/28",
     "13.236.8.224/28",
@@ -598,8 +600,8 @@ GITLAB_VALID_ORIGIN_IPS = []
 EXPORTS_TTL = 60 * 60 * 24  # 24 hours
 
 WEBHOOKS_ENABLED = False
-WEBHOOKS_BLOCK_PRIVATE_ADDRESS = False
-
+WEBHOOKS_ALLOW_PRIVATE_ADDRESS = False
+WEBHOOKS_ALLOW_REDIRECTS = False
 
 # If is True /front/sitemap.xml show a valid sitemap of taiga-front client
 FRONT_SITEMAP_ENABLED = False
